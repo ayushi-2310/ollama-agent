@@ -1,0 +1,379 @@
+Here is a **clean, ordered, reproducible setup guide** you can follow on another system without running into the same chaos again. I removed unnecessary steps, grouped things logically, and added expected outputs where useful.
+
+---
+
+# OpenClaw Local Agent Setup with Ollama (Step-by-Step)
+
+This guide installs and runs **OpenClaw** locally using a local LLM via **Ollama**.
+
+Recommended lightweight model: **Qwen2.5 0.5B**.
+
+---
+
+# 1. Install Ollama
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+Verify installation:
+
+```bash
+ollama --version
+```
+
+---
+
+# 2. Install and Test a Model
+
+Do **not start with large models** on low RAM machines.
+
+Install a lightweight model:
+
+```bash
+ollama pull phi3
+```
+
+Test the model:
+
+```bash
+ollama run phi3
+```
+
+You should see a chat prompt.
+
+Exit:
+
+```
+/bye
+```
+
+---
+
+# 3. Verify Ollama Server
+
+Ollama usually starts automatically.
+
+Check if it is running:
+
+```bash
+curl http://localhost:11434
+```
+
+Expected output:
+
+```
+Ollama is running
+```
+
+Check installed models:
+
+```bash
+ollama list
+```
+
+---
+
+# 4. Clone OpenClaw Repository
+
+```bash
+git clone https://github.com/openclaw/openclaw.git
+cd openclaw
+```
+
+---
+
+# 5. Install Node.js
+
+Install Node and npm:
+
+```bash
+sudo apt install nodejs npm
+```
+
+Check version:
+
+```bash
+node -v
+```
+
+---
+
+# 6. Install Bun (optional but recommended)
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+source ~/.bashrc
+```
+
+Verify:
+
+```bash
+bun -v
+```
+
+---
+
+# 7. Install PNPM Package Manager
+
+```bash
+sudo npm install -g pnpm
+```
+
+Verify:
+
+```bash
+pnpm -v
+```
+
+---
+
+# 8. Install Node Version Manager (NVM)
+
+OpenClaw requires Node 22+.
+
+Install NVM:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+```
+
+Reload shell:
+
+```bash
+source ~/.bashrc
+```
+
+Verify:
+
+```bash
+nvm --version
+```
+
+---
+
+# 9. Install Node 22
+
+```bash
+nvm install 22
+nvm use 22
+```
+
+Verify:
+
+```bash
+node -v
+```
+
+Expected output:
+
+```
+v22.x.x
+```
+
+---
+
+# 10. Install OpenClaw Dependencies
+
+Inside the OpenClaw project:
+
+```bash
+pnpm add -Dw tsdown
+pnpm install
+```
+
+Run development build:
+
+```bash
+pnpm dev
+```
+
+---
+
+# 11. Setup OpenClaw
+
+Initialize OpenClaw:
+
+```bash
+node scripts/run-node.mjs setup
+```
+
+Start the gateway:
+
+```bash
+node scripts/run-node.mjs gateway
+```
+
+Leave this terminal running.
+
+---
+
+# 12. Configure Models (New Terminal)
+
+Scan available models:
+
+```bash
+node scripts/run-node.mjs models scan
+```
+
+Set the model:
+
+```bash
+node scripts/run-node.mjs models set ollama/phi3:latest
+```
+
+---
+
+# 13. Configure Authentication
+
+Run:
+
+```bash
+node scripts/run-node.mjs models auth add
+```
+
+When prompted:
+
+| Prompt         | Value           |
+| -------------- | --------------- |
+| Token provider | `custom`        |
+| Provider id    | `ollama`        |
+| Token method   | `paste token`   |
+| Profile id     | `ollama:manual` |
+| Token expires  | `No`            |
+| Token          | `local`         |
+
+This creates an auth profile for Ollama.
+
+Verify configuration:
+
+```bash
+node scripts/run-node.mjs models status
+```
+
+---
+
+# 14. Install a Tool-Capable Model
+
+Remove old model:
+
+```bash
+ollama rm phi3
+```
+
+---
+
+## Option A (Large model — may fail on low RAM)
+
+```bash
+ollama pull qwen2.5:7b
+```
+
+If memory errors occur, use smaller models.
+
+---
+
+## Option B (Recommended for 8GB RAM)
+
+Install:
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+Set it:
+
+```bash
+node scripts/run-node.mjs models set ollama/qwen2.5:3b
+```
+
+---
+
+## Option C (Best for low RAM systems)
+
+Install smallest model:
+
+```bash
+ollama pull qwen2.5:0.5b
+```
+
+Set it:
+
+```bash
+node scripts/run-node.mjs models set ollama/qwen2.5:0.5b
+```
+
+Verify:
+
+```bash
+node scripts/run-node.mjs models status
+```
+
+---
+
+# 15. Restart OpenClaw Gateway
+
+Stop gateway:
+
+```
+CTRL + C
+```
+
+Start again:
+
+```bash
+node scripts/run-node.mjs gateway
+```
+
+Expected output:
+
+```
+[gateway] listening on ws://127.0.0.1:18789
+```
+
+---
+
+# 16. Test the Agent
+
+Open a new terminal:
+
+```bash
+node scripts/run-node.mjs agent --session-id test --message "hello"
+```
+
+Expected response:
+
+```
+Assistant: Hello! How can I help you today?
+```
+
+---
+
+# 17. Verify Ollama API (Optional)
+
+```bash
+curl http://localhost:11434/api/tags
+```
+
+You should see installed models in JSON format.
+
+---
+
+# Final Working Architecture
+
+```
+OpenClaw Agent
+      │
+      ▼
+OpenClaw Gateway
+      │
+      ▼
+Ollama API
+      │
+      ▼
+Qwen2.5 Model
+```
+
+---
+
+I
