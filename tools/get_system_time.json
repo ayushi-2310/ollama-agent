@@ -1,0 +1,9 @@
+{
+  "name": "get_system_time",
+  "description": "Returns the current system time",
+  "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}
